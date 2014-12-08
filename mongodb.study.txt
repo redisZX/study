@@ -1,0 +1,136 @@
+一.1，查操作
+	查询操作mongodb提供了 db.tableName.find(); 第一个参数 相当于sql的where条件
+		a,接受两个查询条件和预测返回一个光标匹配的文档，可以查询，限制，跳过，和，排序。
+			eg：db.users.find( { age: { $gt: 18 } }, { name: 1, address: 1 } ).limit(5).sort(age:1);
+			*:(1)查询users表5条数据，年龄大于18的只显示name，address字段，			
+			  (2)limit(5),取5条，sort（age：1）按照年龄升序拍，-1降序。
+		b，find()方法指定，指定返回字段或者排除文档字段  where 条件 age=18的 
+			eg：db.users.find({age:18},{name:1,_id:0});
+			*:(1),查询users表，age=18 的那条数据，只显示 name，字段，排除自动显示_id 字段。
+		c，从一个结果集中排除一个字段 {user_id:{$gt:42}} where 条件    select name,sex,user_id from users where user_id>42;
+			eg:db.users.find({user_id:{$lt:42}},{age:0});
+			*(1):查询users表 user_id 大于42的不显示age字段。
+		d,返回两个字段和条件以_id 为主的集合 {user_id:{$gt:42}}
+			eg:db.users.find({users_id{$gt:42}},{name:1,age:1});
+			*:查询users表，users_id 大于42的 只显示 name 和 age
+		c,查询一个集合中的所有文档
+			eg：db.tableName.find({}) ,一个空文档表示选择所有集合
+			    db.tableName.find();
+		d:指定相等条件 {字段:值}
+			eg:db.tableName.find({"name":"chen"}),查找name:chen 的那条数据
+		e:返回指定建 sql select name,age from tableName
+			eg：db.tableName.find({},{name:1,age:1})
+		f:排除指定建
+			eg：db.tableName.find({},{name:0});
+------------------------------------------------------------------------------
+		A:查询条件
+			$lt < ,$lte <=, $gt > ,$gte >=
+			a:age>=18 && age<=40 -----sql select * from tableName where age>=18 && age<=40;
+				eg:db.tableName.find({"age":{"$gt":18,"$lt":40}});
+			b:!=  name != "chen"; ----sql select * from tableName where name != "chen";
+				eg:db.tableName.find({name:{$ne:"chen"}}); //查询年龄不为chen的
+			c：$in  id in('1','2','3')----sql select * from tableName where colum_name IN('value1','value2');
+				eg:db.tableName.find({name:{"$in":['value1','value2']}});// 满足那个就查询那个 
+			d：$nin not in('1','3','4')---sql select * from tableName where colum_name not in("value1","value2");
+				eg:db.tableName.find({name:{$nin:["value1","value2"]}}); //不在里面的查询出来
+			e：$or  name="chen" OR name="zhao" ---sql select * from tableName where name="chen" OR name="zhao"
+				eg:db.tableName.find({"$or":[{"name":"zhao"},{"age":35}]});//查询name=“zhao” 或者 查询 年龄为35 的
+			f：$or $in  id in("1","2","3") OR age>=40 ---sql select * from tableName Where id in("1","2","3") OR age>=30
+				eg:db.tableName.find({"$or":[{name:{"$in":['name1','name2']}},{"age":36}]});
+			g:$not 表示取反的意思
+				eg:db.tableName.find({"$not":{"$in":['1','2']}});
+		B:正则查询
+			1.db.tableName.find({name:/zhao/})	----sql select * from tableName where name like "%zhao%"; //查询表中包含关键子zhao的列
+	 		2.查询以什么开头的记录
+			  db.tableName.find({name:/^zhao/})     ---sql  select * from tableName where name like "zhao%"; //查询以zhao开头的列
+			3.查询以什么结尾的字段
+			  db.tableName.find({name:/zhao$/})     ----sql select * from tableName where name like "%zhao"; //查询以zhao结尾的列
+		c:数组查询
+		
+
+		d:聚合查询 aggregate 集合 主要处理数据的（统计，平均值，求和等),并返回计算后的结果，类似sql语句里的count(*)	
+			aggregate语法 db.tableName.aggregate(AGGREGATE_OPERATION)
+				eg：类似sql 计算每个作者写的文章数  select by_user,count(*) from mycol group by_user
+					{
+					   _id: ObjectId(7df78ad8902c)
+					   title: 'MongoDB Overview', 
+					   description: 'MongoDB is no sql database',
+					   by_user: 'w3cschool.cc',
+					   url: 'http://www.w3cschool.cc',
+					   tags: ['mongodb', 'database', 'NoSQL'],
+					   likes: 100
+					},
+					{
+					   _id: ObjectId(7df78ad8902d)
+					   title: 'NoSQL Overview', 
+					   description: 'No sql database is very fast',
+					   by_user: 'w3cschool.cc',
+					   url: 'http://www.w3cschool.cc',
+					   tags: ['mongodb', 'database', 'NoSQL'],
+					   likes: 10
+					},
+					{
+					   _id: ObjectId(7df78ad8902e)
+					   title: 'Neo4j Overview', 
+					   description: 'Neo4j is no sql database',
+					   by_user: 'Neo4j',
+					   url: 'http://www.neo4j.com',
+					   tags: ['neo4j', 'database', 'NoSQL'],
+					   likes: 750
+					},
+				  mongo--- db.mycol.aggregate([{$group:{_id:"$by_user",num_tutorial:{$num:1}}}]);
+					   *:将mycol 以_id为主 按by_user进行分组 num_tuorial 进行累计相加
+				  mongo-- db.newtest.aggregate([{$group:{_id:"$sex",num_sex:{$sum:1}}}]) 
+					   *将newtest 表 按照 性别分组并统计各有几个
+				××××
+				    $sum  计算总和	
+					   db.mycol.aggregate([{$group:{_id:"$by_user",num_tuorial:{$num:1}}}])
+		  		    $avg  计算平均值
+					   db.mycol.aggregate([{$group:{_id:"$by_user",num_tuorial:{$avg:1}}}])
+				    $max  计算最大值
+					   db.mycol.aggregate([{$group:{_id:"$by_user",num_tuorial:{$max:1}}}])		
+	sum：find();
+		1,默认情况下, _id 字段包含在结果中。 要排除  _id 从结果集字段,指定 _id: 0 在 投影文档。
+		 			
+一.3,查询优化
+	建立索引：索引通常能够极大的提高查询的效率，如果没有索引，MongoDB在读取数据时必须扫描集合中的每个文件并选取那些符合查询条件的记录。 
+		 索引是特殊的数据结构，索引存储在一个易于遍历读取的数据集合中，索引是对数据库表中一列或多列的值进行排序的一种结构 
+		a,创建索引 ensureIndex()方法创建索引，
+			eg：db.tableName.ensureIndex({key:1}); 
+			*:为tableName集合中的key字段创建一个升序索引如果想设为降序将key字段设为-1即可	
+		b,设置多个字段索引（关系型数据库称为复合索引）;
+			eg:db.tableName.ensureIndex({"title":1,description:-1});
+		c,ensureIndex() 接收参数，可选参数如下
+			background	Boolean	建索引过程会阻塞其它数据库操作，background可指定以后台方式创建索引，即增加 "background" 可选参数。"background" 默认值为false。
+			unique	Boolean	建立的索引是否唯一。指定为true创建唯一索引。默认值为false.
+			name	string	索引的名称。如果未指定，MongoDB的通过连接索引的字段名和排序顺序生成一个索引名称。
+			dropDups	Boolean	在建立唯一索引时是否删除重复记录,指定 true 创建唯一索引。默认值为 false.
+			sparse	Boolean	对文档中不存在的字段数据不启用索引；这个参数需要特别注意，如果设置为true的话，在索引字段中不会查询出不包含对应字段的文档.。默认值为 false.
+			expireAfterSeconds	integer	指定一个以秒为单位的数值，完成 TTL设定，设定集合的生存时间。
+			v	index version	索引的版本号。默认的索引版本取决于mongod创建索引时运行的版本。
+			weights	document	索引权重值，数值在 1 到 99,999 之间，表示该索引相对于其他索引字段的得分权重。
+			default_language	string	对于文本索引，该参数决定了停用词及词干和词器的规则的列表。 默认为英语
+			language_override	string	对于文本索引，该参数指定了包含在文档中的字段名，语言覆盖默认的language，默认值为 language.
+			eg：db.tableName.ensureIndex({open:1,close:-1},{background:true});让创建工作在后台执行
+二.1,插入操作（db.tableName.insert()）
+	a.在MongoDB中, db.tableName.insert() 添加方法 文档集合。 
+		eg.db.tableName.insert({name:"chen",sex:"gril",age:32});
+		*: 插入一个名字为chen，性别为 gril 年龄为32 的数据
+	b.插入一组文件(进行批量插入);				
+		1,定义一个变量，赋值一个文档数组，后将其插入
+		eg: var mydocuments = [
+					     {
+						item: "ABC2",
+						details: { model: "14Q3", manufacturer: "M1 Corporation" },
+						stock: [ { size: "M", qty: 50 } ],
+						category: "clothing"
+					      },
+						
+					      {
+						item: "ABC2",
+						details: { model: "14Q3", manufacturer: "M1 Corporation" },
+						stock: [ { size: "M", qty: 50 } ],
+						category: "clothing"
+					      },
+				      ]
+		db.tableName.insert(mydocuments);
