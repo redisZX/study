@@ -1,0 +1,288 @@
+http://www.2cto.com/database/201201/116110.html
+http://blog.csdn.net/wangpeng047/article/details/7705588
+http://wenku.baidu.com/view/f1d84d0d4431b90d6c85c7da.html
+
+
+$gt  > 大于
+$lt  < 小于
+$gte >= 大于等于 
+$lte <= 小于等于
+db.mycol.insert({title:'Neo4j Overview', description: 'Neo4j is no sql database',by_user: 'Neo4j',url: 'http://www.w3cschool.cc',tags: ['mongodb','database', 'NoSQL'],likes: 750})
+--------------------------------------------------------------------------------------------
+	1.查看当前数据库
+		db
+	2.查看有多少数据库
+		show dbs  -------sql - show databases
+	3.切换数据库
+		use dbName （也是创建）
+	4.删除当前使用数据库 
+		db.dropDatabases()
+	5.创建表
+		db.createCollection("zhao") ------------------------------------sql create table tableName（）
+		db.createCollection("zhao",{capped:true,size:10000})
+		//capped:true 表示表结构不能被修改，size表示大小，插入数据时会按找表结构来插入数据，超出部分会覆盖前面已经插好的数据
+		
+		sql ---------------------
+				 create table zhao(
+					    -> id int(11) auto_increment primary key,
+					    -> name varchar(255) not null,
+					    -> sex tinyint(1) not null default "0",
+					    -> age tinyint(3) not null
+					    -> )engine=InnoDb default charset=utf8
+	6.修改数据库表明
+		db.oldName.renameCollection("newName");  --------------sql rename table oldName to newName;
+
+					
+
+	5.插入记录
+		db.tableName.insert({a:1,b:1});  
+		db.tableName.insert({name:'chendoudou',sex:"man",age:23});        -----------------sql  insert into tableName(字段1,字段2)value("V1","V2");
+	6.查看全部记录
+		db.tableName.find()                   -----------sql  selec * from tableName
+	7.仅查询一条记录
+		db.tableName.findOne()		      -------------sql select * from tableName limit 1;
+	8.查询不同值 distinct 返回的是一个数组
+		db.tableName.distinct('字段');
+	9.模糊匹配  
+		1.db.tableName.find({name:/zhao/})	----sql select * from tableName where name like "%zhao%"; //查询表中包含关键子zhao的列
+ 		2.查询以什么开头的记录
+		  db.tableName.find({name:/^zhao/})     ---sql  select * from tableName where name like "zhao%"; //查询以zhao开头的列
+		3.查询以什么结尾的字段
+		  db.tableName.find({name:/zhao$/})     ----sql select * from tableName where name like "%zhao"; //查询以zhao结尾的列
+	10.查询指定的字段(只看 name sex age 等等);
+	   	db.newtest.find({},{name:1,age:1});  //只看 name age 
+						----sql select name,age,sex from newtest; 
+	11.查询排除指定的列
+		db.newtest.find({},{name:0}); //排除指定的列 除了name 其他都显示
+	
+		
+	12.字段排序
+		db.newtest.find().sort({age:1}) //查看全部字段 年龄age 为1 安照 升序排列 -1 降序排列
+						----sql select * frome newtest order by age desc//desc 降序 asc 升序
+	13.统计记录条数
+		db.newtest.find().count()   // 查询 newtest 的总记录数
+						-----sql  select count(*) from newtest 
+	   统计满足条件的记录数
+		db.newtest.find({name:"zhao"}).count(); //统计 name=zhao条件的总记录数
+						-----sql  select count(1) as nameNum from newtest where name="zhao";
+	   统计年龄大于20 的记录数
+		db.newtest.find({age:{"$gt":20}}).count //注意 20 是什么数据类型 是整形 还是字符串，字符串加 "";
+						-------sql select count(1) as gtAge from newtest where age >20;
+	   统计字段中符合条件的记录数
+		db.newtest.find({age:{"$exists":"ture"}}) //age字段存在的条数
+ 	14  查询10条以后的记录 limit skip
+		db.newtest.find().skip(10); //从第10条以后开始查
+	    查询 第10条以后的数据 查 5条
+		db.newtest.find().skip(10).limit(5)// 从10条后开始拿5条		
+	15. or 查询
+		db.newtest.find({"$or":[{name:"z1"},{name:"c1"}]}); --sql select * from newtest where name="z" OR name="c";
+	16. and 查询
+		db.newtest.find({"$and:[{name:"z1"},{sex:"man"}]"}); ----sql select * from newtest where name="z1" AND sex="man"
+	17.修改记录
+		db.newtest.update({name:"c1"},{"$set",{age:122,sex:"gril"}});//将name等于c1的记录年龄修改为122 性别修改为 gril。
+			----sql update  newtest set name="chen2222" where id>1 && id<5; 将 id>1 和 id<5 的记录 的name 改成 chen22222
+	18.删除记录 remove
+		
+		db.newtest.remove({age:"1000"}); ---delete from newtest where age=“1000”; 将标newtest 中年龄为1000的记录删除
+		db.newtest.remove({"age":{"$lt":20}}); delete from newtest where age <20   newtest 标中 年龄小于20 的删除
+	19.全部删除
+		db.newtest.remove();
+		db.newtest.remove({});
+
+-----------------------------综合联合查询操作------------------------------------
+		db.newtest.find({name:"zhao"}); //查询name 等于zhao 的 记录 ----sql select * from newtest where name="zhao";	        
+		db.newtest.find({age:"22"}).count(); //查询年龄为22 的总记录数。
+		db.newtest.find({age:"22"}).limit(2)//年龄为22 的取 2条
+		db.newtest.find(age:"22").skip(2)//年龄为22的从2条后开始取，前面的忽略不取。
+		db.newtest.find().skip(2).limit(3);//分页，从2条开始取 取3条		
+		db.newtes.save({name:"liuyin",age:"21":sex:"gril"}); 插入一条数据
+		for循环
+		for(var i=1;i<=20;i++){var num = i%6;db.test.insert({_id:i,name:"chen_"+i,age:num});}
+	
+	一. mongodb group by 的使用
+		key：是用来分组的字段，和keyf一样两者必须要有一个
+		keyf：可以接受一个javascript函数，用来动态的确定分组文档的字段。和key必须要有一个
+		initial：初始化统计变量
+		$reduce 函数执行统计的操作
+		function 
+
+		1.db.newtest.group({key:{sex:true},initial:{num:0},$reduce:function(doc,prev){prev.num++}});
+
+		   数组： [ { "sex" : "man", "num" : 4 }, { "sex" : "gril", "num" : 9 } ] //得到分组字段总数和类别 
+		   //将年龄分组 （gril 9个，man：4个） prev调用group内的方法 doc是返回的一个结果集; 可以自己定义
+		   db.表名.group({key:{sex:true},initial:{num:0},$reduce:function(doc,prev){prev.num++}});			
+	
+		2.db.runCommand({group:{ns:"newtest",key:{sex:true},initial:{num:0},$reduce:function(doc,prev){prev.num++}}});
+		   json	
+			   {
+		"retval" : [
+			{
+				"sex" : "man",
+				"num" : 4
+			},
+			{
+				"sex" : "gril",
+				"num" : 9
+			},
+			{
+				"sex" : "gad",
+				"num" : 2
+			}
+		],
+		"count" : 15,
+		"keys" : 3,
+		"ok" : 1
+	}
+		  //runCommand({group:{ns:"表名",key{分组字段:true},initial:{num:0“(/初始化变量/)”},$reduce:function(doc,prev){prev.num++}}});
+		  的到分组具体详情 总记录数count 分类个数keys 分类个类型总数
+		
+                3.条件筛选condition
+		 db.test.group({key:{age:true},initial:{num:0},$reduce:function(doc,prev){prev.num++},condition:{age:{$gt:2}}});		
+		4.普通的$where 条件查询
+		 db.newtest.find($where:function(){
+		
+			return this.age>20;			
+		});
+		//查询年龄大于20的
+		5.在分组中使用where条件
+		 db.test.group({key:{age:true},initial:{num:0},$reduce:function(doc,prev){prev.num++},condition:{$where:function(){return this.age>3}}});
+----------------------------------------------------------------------------------------------------------
+	mongodb 
+		1.insert
+			1.db.tableName.insert({name:"zhao",age:"24",sex:"man"}); ---sql insert into tableName(name,sex,age)values("zhao","23","man");
+			2.批量插入，多个文档可以放在一个数组内，一次插入多条数据
+			  db.newtest.insert([{name:"zhao",sex:"man",age:"20"},{name:"chen",sex:"gril",age:"30"}]); 一次插入多个数据
+			  db.person.insert([{"name":'Mary',"age":21,"status":"A"},{name:"Lucy","age":89,status:"A"},{'name':"Jacky",age:30,"status":"A"}])
+			  *.注意批量一次最多能插入 必能超过16M
+				在一个insert命令中插入多条数据时，MongoDB不保证完全成功或完全失败。
+		2.find()
+			1).查询与投影
+			2).find 方法
+			  在MongoDB中，查询指向特定的文档集合，查询设定条件，指明MongoDB需要返回的文档；查询也可以包含一个投影，指定返回的字段。
+			  在下面的图形中，查询过程指定了一个查询条件和一个排序修饰
+			  db.user.find({age:{$gt:18}}).sort({age:-1});
+			3).db.collection.find(criteria,projection);
+			  criteria:查询条件，文档类型，可选
+			  projection--返回的字段，文档类型，可选如果返回所有字段，则忽略这个参数
+			4).单子段查询
+				db.tableName.find({status:'X'});查询
+			5).单子段查询比较
+				db.tableName.find({'age':{$gt:12}});查询年龄大于12岁的
+				×比较条件也是最基本的查询条件之一，通过运算符的比较运算来筛选或排除文档，从而获取到我们想要的文档数据。
+				大于($gt)        sql >
+				大于等于($gte)   sql >= 
+				小于($lt)	sql <	
+				小于等于($lte)   sql <=
+				不等于($ne)      sql !=
+				包含于($in)      sql  in
+				不包含于($nin)   sql not in
+				数值型的字段可以使用$gt、$gte、$lt、$ne等运算符来比较
+				如果是数组条件，$in、$nin会是一个不错的选择。
+			6).单子段查询数组条件
+				当字段包含数组，可以进行数组完全匹配或匹配特定的值。
+				1).完全匹配
+					db.tableName.find({tages:['fruit','food','citrus']});
+				2).单个元素匹配
+					db.tableName.find({tages:'fruit'})
+				3).特定元素匹配
+					db.tableName.find({'tags.0':'fruit'});
+			7).单子段查询-子文档条件
+				如果文档中包含嵌入的子文档，可以使用".key"的方式访问子文档节点。	 
+				{
+					  _id:<object>,
+					  username:"123xyz",
+					  contact:{
+						phone:"12345678",
+						email:"453493049@qq.com"
+					  },
+					  access:{
+						level:5,
+						group:"dev"  
+                                          }	
+				}
+				db.mydb.find({"access.level":5});
+			8).多字段复合查询
+				1).AND复合查询
+					db.tableName.find({type:'food',price:{$lt:96}}); 查询 类型是水果的 并且价格大于 96
+					db.person.find({city:"北京",age:{$gt:30}})
+			        2).OR复合查询	
+					db.tableName.find({
+								$or:[
+								     {qty:{$gt:100}}
+                                                                     {price:{$lt:9.95}} 	
+                                                                   ]
+							
+							 })
+					（qty）大于100或者（$or）价格（price）小于9.95的所有数据。
+					 当有多个查询条件，只需要满足一种时使用$or运算符。
+					db.tableName.find({$or:[{status:1},{age:40}]})
+		3.更新修改文档
+			1.update方法
+			  1).语法db.collection.update(query,update,{upsert:boolean,multi:boolean})
+				 query.查询条件，和find（）中查询条件写法一致
+				 update--修改内容，文档
+				 upsert--可选，如果为true，那么集合中没有匹配文档时，创建文档，默认 为flase
+				 multi-可选，如果值为true，那么将更新全部符合条件的文档，否则仅更新一个文档，默认false。
+			2.save 方法	
+				save
+				1).语法 db.collection.save();
+				   参数：document：新的文档，save只能对一个文档进行操作。
+				   db.tableName.save({name:"zhao",sex:"man",sex:"21"}); 相当于增加	
+		4.游标
+			1.什么是游标
+				find 命令并不直接返回结果，而是返回一个结果集迭代器，即游标。
+		5.mongodb高级查询
+			1).条件查询
+				db.collection.find({ "field" : { $gt: value } } ); // 大于: field > value
+				db.collection.find({ "field" : { $lt: value } } ); // 小于: field < value
+				db.collection.find({ "field" : { $gte: value } } ); // 大于等于: field >= value
+				db.collection.find({ "field" : { $lte: value } } ); // 小于等于: field <= value
+			   如果要同时满足多个条件可以这样做			
+			    	db.collection.find({"filed":{$gt:value1,$lt:value2}}) // value1<filed<value2 //用与区间搜索
+				db.tableName.find({age:{$gt:25,$lt:30}});// 25<age<30 //大于25 小于 30 
+			2).$all 匹配所有
+				这个操作符跟SQL 语法的in 类似，但不同的是, in 只需满足( )内的某一个值即可, 而$all 必须满足[ ]内的所有值
+				db.users.find({age:{$all:[6,8]}}); //必须满足所有
+				可以查询出 {name: 'David', age: 26, age: [ 6, 8, 9 ] } //可以查询出来
+				但查询不出 {name: 'David', age: 26, age: [ 6, 7, 9 ] } //不可以查询 出来
+				db.users.insert({"name":"David",age:26,course:["js","Node","Mongodb"]},{"name":"Tom",age:26,course:["js","Node","Mongoose"]})
+				db.users.find({course:{$all:["js","Mongodb"]}}); 必须全部满足
+			3).$exists 判断字段是否存在
+				a).查询所有存在age字段的记录
+				   db.users.find({age:{$exists:true}});//查询所有存在age 的记录  db.tableName.find({},{name:1}) 之查询 name 字段
+				b).查询所有不存在age的字段
+				   db.users.find({age:{$exists:flase}})//查询所有age不存在的记录	  
+				c).$null 会匹配 具体null 还会匹配 不存在键的之记录 用 $exists 来限制
+				   因为”null”不仅会匹配某个键的值为null的文档，而且还会匹配不包含这个键的文档 。那么怎么样才能只找到”Lily”呢?我们用exists 来限制 
+				   db.users.find({sex:{"$in":[null],"$exists":true}}) //在users文档找出"sex"值为"null"并且字段存在的记录。
+			4).$mod取模运算
+				查询age取模10 等于1 的数据 
+				   db.tableName.find({age:{$mode:[10,1]}});//可以看出只显示出了age 取模6 等于1 的数据，其它不符合规则的数据并没有显示出来
+				   db.users.find({age:{$mod:[5,1]}}) ; 查询 除5 余 1 的 的字段
+			5).$ne 不等于
+				查询X的值不等于3的数据
+				db.tableName.find(X:{$ne:3}) 查询表中X 的值不等于3的值
+				db.tableName.find({age:{$ne:20}});//查询年龄不等于20的记录
+			6).$in 包含
+				与sql 标准语法的用途是一样的，即要查询的是一系列枚举值的范围内，select name,sex from tableName where in('','','','');
+				db.tableName.find({age:{$in:[18,20]}}); //查询年龄为18 或者20 的   	
+			7).$nin 不包含
+				与sql 标准语法的用途是一样的，即要查询的数据在一系列枚举值的范围外
+				查询X的值
+				db.users.find({age:{$nin:[18,20]}}); 查询 年龄不是 18  或者 20 的
+			8）.$size 数组元素个数
+				
+			9).正则表达式匹配
+				查询不匹配name=B*带头的记录
+				db.users.find({name:{$not:/^B.*}});//查询不匹配 name=B*
+				详细可见上面的模糊匹配
+			10).javascript查询和$where 查询
+				$where 查询a 大于3 的数据
+				db.c1.find({a:{$gt:3}});
+				db.c1.find({$where:"$this.a>3"});
+				db.c1.find("this.a>3")	
+			        不是很必要 ，效率过低
+			11).count()查询记录条数
+				count查询记录条数
+				db.users.find().count();
+				
